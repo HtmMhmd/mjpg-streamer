@@ -3,12 +3,12 @@ version: '3.8'
 services:
   mjpg-streamer:
 # Build Configuration
-    build:
-      context: .
-      dockerfile: Dockerfile
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile
       
 # Runtime Configuration
-    container_name: mjpg-streamer
+    image: mjpg-streamer
     
     ports:
       - "8080:8080"

@@ -22,9 +22,6 @@ RUN git clone https://github.com/jacksonliam/mjpg-streamer.git /app/src/mjpg-str
 WORKDIR /app/src/mjpg-streamer/mjpg-streamer-experimental
 RUN make && make install
 
-# Find where the plugin files are located
-RUN find / -name "*.so" | grep mjpg
-
 # Final stage
 FROM ubuntu:latest
 
@@ -33,11 +30,16 @@ RUN apt-get update && apt-get install -y \
     libjpeg-dev \
     python3-pip
 
+# Create the destination directory for mjpg-streamer plugins
+RUN mkdir -p /usr/local/lib/mjpg_streamer
+
 # Copy the built mjpg-streamer from the builder stage
 COPY --from=builder /usr/local/bin/mjpg_streamer /usr/local/bin/
-# Copy the plugins - adjusted path to use the output_*.so files that should exist
-COPY --from=builder /app/src/mjpg-streamer/mjpg-streamer-experimental/plugins/output_http/output_http.so /usr/local/lib/mjpg_streamer/
-COPY --from=builder /app/src/mjpg-streamer/mjpg-streamer-experimental/plugins/input_uvc/input_uvc.so /usr/local/lib/mjpg_streamer/
+
+# Copy the .so files directly from where they were built
+COPY --from=builder /app/src/mjpg-streamer/mjpg-streamer-experimental/*.so /usr/local/bin/
+COPY --from=builder /app/src/mjpg-streamer/mjpg-streamer-experimental/_build/*.so /usr/local/lib/mjpg_streamer/
+COPY --from=builder /app/src/mjpg-streamer/mjpg-streamer-experimental/_build/plugins/*/*.so /usr/local/lib/mjpg_streamer/
 
 # Set the working directory
 WORKDIR /app/src
@@ -73,5 +75,5 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 RUN mkdir -p /www && echo "{'angle': ${ANGLE}, 'flipped': ${FLIPPED}, 'mirrored': ${MIRRORED}}" \
     > /www/config.json
 
-# Command to run the mjpg-streamer
-CMD ["mjpg_streamer", "-i", "input_uvc.so", "-o", "output_http.so"]
+# Command to run the mjpg-streamer with updated plugin paths
+CMD ["mjpg_streamer", "-i", "/usr/local/lib/mjpg_streamer/input_uvc.so", "-o", "/usr/local/lib/mjpg_streamer/output_http.so"]

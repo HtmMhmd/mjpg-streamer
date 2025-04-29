@@ -36,7 +36,6 @@ jobs:
           # For tag pushes, extract version from tag
           # Default version is 'latest'
           tags: | 
-            ${DOCKERHUB_USERNAME}/mjpg-streamer:${{ github.sha }}
             ${DOCKERHUB_USERNAME}/mjpg-streamer:${{ github.ref_name }}
             ${DOCKERHUB_USERNAME}/mjpg-streamer:latest
             build-args: |

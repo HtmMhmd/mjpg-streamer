@@ -22,6 +22,9 @@ RUN git clone https://github.com/jacksonliam/mjpg-streamer.git /app/src/mjpg-str
 WORKDIR /app/src/mjpg-streamer/mjpg-streamer-experimental
 RUN make && make install
 
+# Find where the plugin files are located
+RUN find / -name "*.so" | grep mjpg
+
 # Final stage
 FROM ubuntu:latest
 
@@ -30,12 +33,11 @@ RUN apt-get update && apt-get install -y \
     libjpeg-dev \
     python3-pip
 
-# Find mjpg_streamer location in builder
-RUN find /usr -name "mjpg_streamer*" | sort
-
 # Copy the built mjpg-streamer from the builder stage
 COPY --from=builder /usr/local/bin/mjpg_streamer /usr/local/bin/
-COPY --from=builder /app/src/mjpg-streamer/mjpg-streamer-experimental/lib /usr/local/lib/mjpg_streamer
+# Copy the plugins - adjusted path to use the output_*.so files that should exist
+COPY --from=builder /app/src/mjpg-streamer/mjpg-streamer-experimental/plugins/output_http/output_http.so /usr/local/lib/mjpg_streamer/
+COPY --from=builder /app/src/mjpg-streamer/mjpg-streamer-experimental/plugins/input_uvc/input_uvc.so /usr/local/lib/mjpg_streamer/
 
 # Set the working directory
 WORKDIR /app/src
@@ -43,6 +45,7 @@ WORKDIR /app/src
 # Copy the application code
 COPY . .
 
+# Rest of your Dockerfile remains the same
 # arguments (default values in `.env` file)
 ARG PORT
 ARG RESOLUTION
